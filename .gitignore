@@ -1,0 +1,10 @@
+*.mp4
+*.mp3
+*.txt
+!requirements.txt
+!packages.txt
+__pycache__/
+.streamlit/
+source_*.mp4
+mastercut_*.mp4
+short_*.mp4

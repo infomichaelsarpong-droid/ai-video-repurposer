@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI YouTube to Viral Shorts Studio</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --primary: #6366f1;
+      --primary-hover: #4f46e5;
+      --primary-light: #eef2ff;
+      --accent: #f43f5e;
+      --accent-glow: rgba(244, 63, 94, 0.2);
+      --bg: #f8fafc;
+      --surface: #ffffff;
+      --border: #e2e8f0;
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --radius: 12px;
+      --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+      --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      padding: 24px;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    /* Header */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .logo-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo-icon {
+      width: 44px;
+      height: 44px;
+      background: linear-gradient(135deg, #f43f5e, #8b5cf6);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 22px;
+      box-shadow: 0 4px 12px var(--accent-glow);
+    }
+
+    .title-area h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .title-area p {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      background: var(--primary-light);
+      color: var(--primary);
+    }
+
+    /* Top Input Bar */
+    .input-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-bottom: 24px;
+      box-shadow: var(--shadow);
+    }
+
+    .input-row {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .url-input {
+      flex: 1;
+      padding: 12px 16px;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.95rem;
+      transition: all 0.2s;
+    }
+
+    .url-input:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px var(--primary-light);
+    }
+
+    .btn {
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-hover);
+      transform: translateY(-1px);
+    }
+
+    .presets {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .preset-label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .preset-chip {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 6px 12px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-weight: 500;
+    }
+
+    .preset-chip:hover, .preset-chip.active {
+      background: var(--primary-light);
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    /* Main Grid */
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+
+    @media (max-width: 900px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Left Column: Video & Preview */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      box-shadow: var(--shadow);
+      margin-bottom: 24px;
+    }
+
+    .card-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* Interactive Phone Short Frame */
+    .preview-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background: #0f172a;
+      border-radius: var(--radius);
+      padding: 24px;
+      color: white;
+    }
+
+    .phone-mockup {
+      width: 270px;
+      height: 480px;
+      background: #000;
+      border-radius: 32px;
+      border: 8px solid #1e293b;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    /* Phone Internal Video Canvas Simulation */
+    .video-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-size: cover;
+      background-position: center;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      transition: all 0.3s ease;
+    }
+
+    .video-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.3);
+    }
+
+    /* Animated Dynamic Captions */
+    .caption-box {
+      position: absolute;
+      bottom: 90px;
+      left: 12px;
+      right: 12px;
+      text-align: center;
+      z-index: 10;
+      padding: 8px;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(4px);
+      border-radius: 8px;
+    }
+
+    .caption-word {
+      display: inline-block;
+      font-size: 1.1rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      color: #ffffff;
+      margin: 0 3px;
+      text-shadow: 2px 2px 0px #000;
+      transition: all 0.15s ease;
+    }
+
+    .caption-word.highlight {
+      color: #facc15;
+      transform: scale(1.15);
+      background: #000;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    /* Shorts UI Overlay */
+    .shorts-overlay-right {
+      position: absolute;
+      right: 10px;
+      bottom: 70px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      align-items: center;
+      z-index: 15;
+    }
+
+    .action-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      font-size: 0.65rem;
+      gap: 2px;
+      color: white;
+    }
+
+    .action-circle {
+      width: 36px;
+      height: 36px;
+      background: rgba(255,255,255,0.2);
+      backdrop-filter: blur(8px);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+    }
+
+    .shorts-overlay-bottom {
+      position: absolute;
+      bottom: 12px;
+      left: 12px;
+      right: 50px;
+      z-index: 15;
+      font-size: 0.75rem;
+    }
+
+    .shorts-channel {
+      font-weight: 700;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .shorts-caption-text {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      opacity: 0.9;
+    }
+
+    /* Playback controls under phone */
+    .playback-controls {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-top: 20px;
+      width: 100%;
+      max-width: 360px;
+    }
+
+    .play-btn {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: var(--primary);
+      border: none;
+      color: white;
+      font-size: 18px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+
+    .play-btn:hover {
+      background: var(--primary-hover);
+      transform: scale(1.05);
+    }
+
+    .scrubber {
+      flex: 1;
+      height: 6px;
+      background: #334155;
+      border-radius: 3px;
+      position: relative;
+      cursor: pointer;
+    }
+
+    .scrubber-fill {
+      height: 100%;
+      background: var(--accent);
+      border-radius: 3px;
+      width: 35%;
+      position: relative;
+    }
+
+    .scrubber-thumb {
+      position: absolute;
+      right: -6px;
+      top: -4px;
+      width: 14px;
+      height: 14px;
+      background: white;
+      border-radius: 50%;
+    }
+
+    /* Right Column: AI Analysis & Metadata */
+    .segment-card {
+      background: var(--primary-light);
+      border: 1.5px solid var(--primary);
+      border-radius: 10px;
+      padding: 16px;
+      margin-bottom: 20px;
+    }
+
+    .segment-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .virality-score {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: #10b981;
+      color: white;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 700;
+    }
+
+    .meta-group {
+      margin-bottom: 16px;
+    }
+
+    .meta-label {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      margin-bottom: 6px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .meta-box {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 0.9rem;
+      color: var(--text);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .meta-box textarea, .meta-box input {
+      background: transparent;
+      border: none;
+      width: 100%;
+      font-size: 0.9rem;
+      color: var(--text);
+      font-family: inherit;
+      resize: none;
+    }
+
+    .meta-box textarea:focus, .meta-box input:focus {
+      outline: none;
+    }
+
+    .copy-btn {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 4px 10px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      color: var(--text-muted);
+      transition: all 0.2s;
+    }
+
+    .copy-btn:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    .tag-cloud {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 6px;
+    }
+
+    .tag-pill {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 4px 10px;
+      font-size: 0.8rem;
+      color: var(--primary);
+      font-weight: 500;
+    }
+
+    /* Timeline breakdown */
+    .timeline-view {
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+    }
+
+    .timeline-bar {
+      height: 36px;
+      background: #e2e8f0;
+      border-radius: 8px;
+      position: relative;
+      overflow: hidden;
+      margin-top: 8px;
+      cursor: pointer;
+    }
+
+    .timeline-segment {
+      position: absolute;
+      height: 100%;
+      background: linear-gradient(90deg, #6366f1, #f43f5e);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 0.75rem;
+      font-weight: 700;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+
+    /* Mode Tabs */
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 8px;
+    }
+
+    .tab-btn {
+      background: none;
+      border: none;
+      padding: 8px 16px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      border-radius: 6px;
+    }
+
+    .tab-btn.active {
+      background: var(--primary-light);
+      color: var(--primary);
+    }
+
+    /* Status Banner */
+    .status-toast {
+      background: #ecfdf5;
+      border: 1px solid #6ee7b7;
+      color: #065f46;
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <!-- Header -->
+    <header>
+      <div class="logo-group">
+        <div class="logo-icon">⚡</div>
+        <div class="title-area">
+          <h1>AI Viral Shorts Studio</h1>
+          <p>Automated YouTube to 9:16 Shorts Extraction & Metadata Engine</p>
+        </div>
+      </div>
+      <span class="badge">● Live Simulator Ready</span>
+    </header>
+
+    <!-- URL Input & Sample Selector -->
+    <div class="input-card">
+      <div class="input-row">
+        <input type="text" id="youtubeUrl" class="url-input" value="https://www.youtube.com/watch?v=kYJzSzg5dKk" placeholder="Paste YouTube video link here...">
+        <button class="btn btn-primary" onclick="runAnalysis()">
+          <span>⚡ Find Viral Short</span>
+        </button>
+      </div>
+
+      <div class="presets">
+        <span class="preset-label">Test Samples:</span>
+        <button class="preset-chip active" onclick="loadSample('podcast')">🎙️ Huberman: Dopamine & Focus</button>
+        <button class="preset-chip" onclick="loadSample('tech')">💡 Sam Altman: The Future of AI</button>
+        <button class="preset-chip" onclick="loadSample('business')">🚀 Hormozi: $100M Hook Strategy</button>
+      </div>
+    </div>
+
+    <!-- Main Workspace Grid -->
+    <div class="grid">
+      <!-- Left: Interactive Mobile Preview -->
+      <div class="card">
+        <div class="card-title">
+          <span>📱 9:16 Short Simulator</span>
+          <span style="font-size: 0.8rem; font-weight: normal; color: var(--text-muted);">Auto-cropped with dynamic subtitles</span>
+        </div>
+
+        <div class="preview-container">
+          <div class="phone-mockup">
+            <!-- Simulated Video Canvas -->
+            <div id="videoCanvas" class="video-canvas" style="background-image: url('https://images.unsplash.com/photo-1590602847861-f357a9332bbc?w=600&auto=format&fit=crop&q=80');">
+              <div class="video-backdrop"></div>
+
+              <!-- Dynamic Word-by-Word Subtitle -->
+              <div class="caption-box">
+                <span id="cap1" class="caption-word">IF</span>
+                <span id="cap2" class="caption-word">YOU</span>
+                <span id="cap3" class="caption-word highlight">WANT</span>
+                <span id="cap4" class="caption-word">UNLIMITED</span>
+                <span id="cap5" class="caption-word">FOCUS</span>
+              </div>
+
+              <!-- Right Action Sidebar (Shorts style) -->
+              <div class="shorts-overlay-right">
+                <div class="action-btn">
+                  <div class="action-circle">👍</div>
+                  <span>142K</span>
+                </div>
+                <div class="action-btn">
+                  <div class="action-circle">💬</div>
+                  <span>1.2K</span>
+                </div>
+                <div class="action-btn">
+                  <div class="action-circle">↗️</div>
+                  <span>Share</span>
+                </div>
+                <div class="action-btn">
+                  <div class="action-circle">🎵</div>
+                </div>
+              </div>
+
+              <!-- Bottom Channel Info -->
+              <div class="shorts-overlay-bottom">
+                <div class="shorts-channel">@HubermanLab • <span>Subscribe</span></div>
+                <div id="overlayTitle" class="shorts-caption-text">How to reset your dopamine baseline instantly #shorts</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Playback Scrubber -->
+          <div class="playback-controls">
+            <button id="playBtn" class="play-btn" onclick="togglePlay()">▶</button>
+            <div class="scrubber" onclick="scrub(event)">
+              <div id="scrubFill" class="scrubber-fill">
+                <div class="scrubber-thumb"></div>
+              </div>
+            </div>
+            <span id="timeLabel" style="font-size: 0.8rem; font-family: monospace;">00:14 / 00:42</span>
+          </div>
+        </div>
+
+        <!-- Video Source Visualizer -->
+        <div class="timeline-view">
+          <div style="display: flex; justify-content: space-between; font-size: 0.8rem; font-weight: 600;">
+            <span>Source Timeline (1h 14m)</span>
+            <span style="color: var(--primary);">Selected Window: 04:12 - 04:54 (42s)</span>
+          </div>
+          <div class="timeline-bar">
+            <div class="timeline-segment" style="left: 28%; width: 14%;">
+              🔥 98% Viral Hook
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: AI Metadata & Automation Output -->
+      <div class="card">
+        <div class="tabs">
+          <button class="tab-btn active" onclick="switchTab('metadata')">📝 AI Viral Metadata</button>
+          <button class="tab-btn" onclick="switchTab('script')">⚙️ FFmpeg & Code</button>
+          <button class="tab-btn" onclick="switchTab('transcript')">📜 Raw Segment</button>
+        </div>
+
+        <!-- Tab 1: Metadata -->
+        <div id="tabMetadata">
+          <div class="segment-card">
+            <div class="segment-header">
+              <span style="font-weight: 700; color: var(--primary);">🎯 AI Viral Clip Selection</span>
+              <span class="virality-score">🔥 98/100 Viral Index</span>
+            </div>
+            <p id="aiReason" style="font-size: 0.85rem; color: #4338ca;">
+              <strong>Hook Analysis:</strong> Strong pattern interrupt in the first 3 seconds ("You are doing dopamine completely wrong"). Builds high emotional tension and gives an actionable takeaway within 42 seconds.
+            </p>
+          </div>
+
+          <div class="meta-group">
+            <div class="meta-label">
+              <span>Viral Shorts Title (High CTR)</span>
+              <button class="copy-btn" onclick="copyField('shortTitle')">Copy</button>
+            </div>
+            <div class="meta-box">
+              <input type="text" id="shortTitle" value="The 1 Dopamine Mistake Ruining Your Focus 🧠">
+            </div>
+          </div>
+
+          <div class="meta-group">
+            <div class="meta-label">
+              <span>Optimized Description</span>
+              <button class="copy-btn" onclick="copyField('shortDesc')">Copy</button>
+            </div>
+            <div class="meta-box">
+              <textarea id="shortDesc" rows="3">Stop spiking your dopamine before deep work. Andrew Huberman explains why layering stimulants causes a massive crash and how to reset your focus baseline.</textarea>
+            </div>
+          </div>
+
+          <div class="meta-group">
+            <div class="meta-label">
+              <span>Targeted Hashtags</span>
+              <button class="copy-btn" onclick="copyTags()">Copy All</button>
+            </div>
+            <div class="tag-cloud" id="tagCloud">
+              <span class="tag-pill">#shorts</span>
+              <span class="tag-pill">#hubermanlab</span>
+              <span class="tag-pill">#productivity</span>
+              <span class="tag-pill">#dopamine</span>
+              <span class="tag-pill">#biohacking</span>
+              <span class="tag-pill">#focus</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab 2: Code & Export -->
+        <div id="tabScript" style="display: none;">
+          <div class="meta-group">
+            <div class="meta-label">
+              <span>Exact FFmpeg Command for this Clip</span>
+              <button class="copy-btn" onclick="copyField('ffmpegCmd')">Copy Command</button>
+            </div>
+            <div class="meta-box">
+              <textarea id="ffmpegCmd" rows="4" style="font-family: monospace; font-size: 0.8rem;">ffmpeg -ss 252 -to 294 -i source.mp4 -vf "crop=ih*(9/16):ih,scale=1080:1920" -c:v libx264 -crf 18 -c:a aac -b:a 192k final_short.mp4</textarea>
+            </div>
+          </div>
+
+          <div class="meta-group">
+            <div class="meta-label">
+              <span>Python Execution Snippet</span>
+            </div>
+            <div class="meta-box" style="background: #1e293b; color: #38bdf8;">
+              <pre style="font-family: monospace; font-size: 0.75rem; overflow-x: auto; width: 100%;">
+import yt_dlp, subprocess
+
+# 1. Download & Cut
+ydl_opts = {'format': 'bestvideo[height<=1080]+bestaudio/best', 'outtmpl': 'raw.mp4'}
+with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+    ydl.download(['https://youtube.com/...'])
+
+# 2. Crop 9:16 Vertical
+subprocess.run([
+    'ffmpeg', '-ss', '252', '-to', '294', '-i', 'raw.mp4',
+    '-vf', 'crop=ih*(9/16):ih', '-c:a', 'aac', 'short.mp4'
+])</pre>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab 3: Transcript Segment -->
+        <div id="tabTranscript" style="display: none;">
+          <div class="meta-group">
+            <div class="meta-label">
+              <span>Extracted Word-by-Word Transcript</span>
+            </div>
+            <div class="meta-box" style="max-height: 250px; overflow-y: auto;">
+              <p id="rawTranscriptText" style="font-size: 0.85rem; line-height: 1.6; color: var(--text);">
+                <strong>[04:12.10]</strong> If you want unlimited focus throughout your day,<br>
+                <strong>[04:15.30]</strong> the biggest mistake you can make is layering stimulants.<br>
+                <strong>[04:19.40]</strong> When you combine caffeine with high-energy music and bright screens,<br>
+                <strong>[04:24.10]</strong> you create an artificial dopamine peak that collapses immediately after.<br>
+                <strong>[04:30.80]</strong> Instead, keep your dopamine baseline steady for consistent drive.
+              </p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const samples = {
+      podcast: {
+        url: "https://www.youtube.com/watch?v=kYJzSzg5dKk",
+        bg: "https://images.unsplash.com/photo-1590602847861-f357a9332bbc?w=600&auto=format&fit=crop&q=80",
+        title: "The 1 Dopamine Mistake Ruining Your Focus 🧠",
+        desc: "Stop spiking your dopamine before deep work. Andrew Huberman explains why layering stimulants causes a massive crash and how to reset your focus baseline.",
+        tags: ["#shorts", "#hubermanlab", "#productivity", "#dopamine", "#biohacking", "#focus"],
+        channel: "@HubermanLab",
+        score: "🔥 98/100 Viral Index",
+        reason: "<strong>Hook Analysis:</strong> Strong pattern interrupt in the first 3 seconds ('You are doing dopamine completely wrong'). Builds high emotional tension and gives an actionable takeaway within 42 seconds.",
+        words: [["IF", "YOU"], ["WANT", "UNLIMITED"], ["FOCUS", "TODAY"], ["STOP", "SPARKING"], ["DOPAMINE", "CRASHES"]],
+        start: 252,
+        end: 294,
+        transcript: "<strong>[04:12.10]</strong> If you want unlimited focus throughout your day,<br><strong>[04:15.30]</strong> the biggest mistake you can make is layering stimulants.<br><strong>[04:19.40]</strong> When you combine caffeine with high-energy music and bright screens,<br><strong>[04:24.10]</strong> you create an artificial dopamine peak that collapses immediately after.<br><strong>[04:30.80]</strong> Instead, keep your dopamine baseline steady for consistent drive."
+      },
+      tech: {
+        url: "https://www.youtube.com/watch?v=L_Guz73e6fw",
+        bg: "https://images.unsplash.com/photo-1531482615713-2afd69097998?w=600&auto=format&fit=crop&q=80",
+        title: "Sam Altman: What Nobody Realizes About AGI 🤯",
+        desc: "Sam Altman reveals the counter-intuitive truth about AI models and why intelligence will become as cheap as electricity.",
+        tags: ["#shorts", "#samaltman", "#openai", "#artificialintelligence", "#tech", "#future"],
+        channel: "@OpenAI",
+        score: "🔥 95/100 Viral Index",
+        reason: "<strong>Hook Analysis:</strong> Provocative statement predicting massive economic shift. High curiosity gap that forces viewers to watch until the 35-second punchline.",
+        words: [["INTELLIGENCE", "WILL"], ["BE", "TOO"], ["CHEAP", "TO"], ["METER", "EVERYWHERE"], ["BUILD", "NOW"]],
+        start: 110,
+        end: 148,
+        transcript: "<strong>[01:50.00]</strong> The cost of intelligence is falling faster than Moore's law.<br><strong>[01:54.20]</strong> In five years, generating software or scientific research<br><strong>[01:59.00]</strong> will cost virtually nothing compared to today.<br><strong>[02:04.50]</strong> Those who adapt early will build multi-billion dollar single-person companies."
+      },
+      business: {
+        url: "https://www.youtube.com/watch?v=0h9Vp_9dZ1s",
+        bg: "https://images.unsplash.com/photo-1557804506-669a67965ba0?w=600&auto=format&fit=crop&q=80",
+        title: "How to Make Anyone Buy in 5 Seconds 💰",
+        desc: "Alex Hormozi breaks down the irresistible offer formula that scaled his companies to $100M+ revenue.",
+        tags: ["#shorts", "#alexhormozi", "#business", "#sales", "#entrepreneur", "#money"],
+        channel: "@AlexHormozi",
+        score: "🔥 99/100 Viral Index",
+        reason: "<strong>Hook Analysis:</strong> High energy, immediate value proposition with direct financial payoff framing. Instant retention magnet.",
+        words: [["MAKE", "AN"], ["OFFER", "SO"], ["GOOD", "PEOPLE"], ["FEEL", "STUPID"], ["SAYING", "NO"]],
+        start: 45,
+        end: 82,
+        transcript: "<strong>[00:45.00]</strong> Make people an offer so good they would feel stupid saying no.<br><strong>[00:50.10]</strong> If you guarantee the result and remove all downside risk,<br><strong>[00:55.40]</strong> price is no longer the objection.<br><strong>[01:02.00]</strong> That is the fundamental secret to $100M offers."
+      }
+    };
+
+    let currentSample = 'podcast';
+    let isPlaying = false;
+    let playInterval;
+    let wordStep = 0;
+
+    function loadSample(key) {
+      currentSample = key;
+      const data = samples[key];
+
+      document.querySelectorAll('.preset-chip').forEach(c => c.classList.remove('active'));
+      event.target.classList.add('active');
+
+      document.getElementById('youtubeUrl').value = data.url;
+      document.getElementById('videoCanvas').style.backgroundImage = `url('${data.bg}')`;
+      document.getElementById('shortTitle').value = data.title;
+      document.getElementById('overlayTitle').innerText = data.title;
+      document.getElementById('shortDesc').value = data.desc;
+      document.getElementById('aiReason').innerHTML = data.reason;
+      document.querySelector('.virality-score').innerText = data.score;
+      document.getElementById('rawTranscriptText').innerHTML = data.transcript;
+
+      // Update Tags
+      const tagCloud = document.getElementById('tagCloud');
+      tagCloud.innerHTML = data.tags.map(t => `<span class="tag-pill">${t}</span>`).join('');
+
+      // Update FFmpeg
+      document.getElementById('ffmpegCmd').value = `ffmpeg -ss ${data.start} -to ${data.end} -i source.mp4 -vf "crop=ih*(9/16):ih,scale=1080:1920" -c:v libx264 -crf 18 -c:a aac -b:a 192k final_short.mp4`;
+
+      resetPlayback();
+    }
+
+    function runAnalysis() {
+      const btn = event.currentTarget;
+      btn.innerHTML = "<span>⏳ Analyzing Video...</span>";
+      btn.style.opacity = "0.7";
+
+      setTimeout(() => {
+        btn.innerHTML = "<span>⚡ Find Viral Short</span>";
+        btn.style.opacity = "1";
+        loadSample('podcast');
+        alert("✨ Viral clip extracted! 9:16 preview & metadata are updated below.");
+      }, 800);
+    }
+
+    function togglePlay() {
+      isPlaying = !isPlaying;
+      const btn = document.getElementById('playBtn');
+      if (isPlaying) {
+        btn.innerText = "⏸";
+        playInterval = setInterval(stepAnimation, 500);
+      } else {
+        btn.innerText = "▶";
+        clearInterval(playInterval);
+      }
+    }
+
+    function resetPlayback() {
+      clearInterval(playInterval);
+      isPlaying = false;
+      document.getElementById('playBtn').innerText = "▶";
+      wordStep = 0;
+      updateCaptions();
+    }
+
+    function stepAnimation() {
+      const data = samples[currentSample];
+      wordStep = (wordStep + 1) % data.words.length;
+      updateCaptions();
+
+      const progress = ((wordStep + 1) / data.words.length) * 100;
+      document.getElementById('scrubFill').style.width = progress + '%';
+    }
+
+    function updateCaptions() {
+      const data = samples[currentSample];
+      const pair = data.words[wordStep] || ["DISCOVER", "NOW"];
+
+      const capBox = document.querySelector('.caption-box');
+      capBox.innerHTML = `
+        <span class="caption-word">${pair[0]}</span>
+        <span class="caption-word highlight">${pair[1] || ''}</span>
+      `;
+    }
+
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      event.target.classList.add('active');
+
+      document.getElementById('tabMetadata').style.display = tabId === 'metadata' ? 'block' : 'none';
+      document.getElementById('tabScript').style.display = tabId === 'script' ? 'block' : 'none';
+      document.getElementById('tabTranscript').style.display = tabId === 'transcript' ? 'block' : 'none';
+    }
+
+    function copyField(elementId) {
+      const input = document.getElementById(elementId);
+      navigator.clipboard.writeText(input.value);
+      alert("Copied to clipboard!");
+    }
+
+    function copyTags() {
+      const data = samples[currentSample];
+      navigator.clipboard.writeText(data.tags.join(" "));
+      alert("Hashtags copied to clipboard!");
+    }
+  </script>
+</body>
+</html>
