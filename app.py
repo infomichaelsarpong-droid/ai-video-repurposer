@@ -66,10 +66,9 @@ with st.sidebar:
     render_speed = st.selectbox("Encoding Speed", ["Ultra Fast (Recommended)", "Standard Quality"], index=0)
 
     st.markdown("---")
-    if FFMPEG_BIN != "ffmpeg" or shutil.which("ffmpeg"):
-        st.success("✅ FFmpeg Engine: Active")
-    else:
-        st.warning("⚠️ FFmpeg: Checking...")
+    with st.expander("🍪 Cloud Bot-Bypass (Cookies - Optional)"):
+        st.caption("If running on Streamlit Cloud and YouTube asks for confirmation, paste your cookies.txt content here:")
+        cookie_text = st.text_area("Netscape Cookie Text", placeholder="# Netscape HTTP Cookie File...", height=80)
 
 # ----------------- RESOLUTION MAPPING -----------------
 res_map = {
@@ -79,11 +78,11 @@ res_map = {
     "Full HD Widescreen (1920x1080)": "1920:1080"
 }
 
-# ----------------- CLOUD-BYPASS YOUTUBE HEADERS -----------------
+# ----------------- CLOUD BOT-BYPASS ENGINE -----------------
 def get_ytdl_base_options(extra_opts=None):
     """
-    Cloud Bot-Detection & 403 Forbidden Bypass:
-    Uses iOS / Android client impersonation to bypass YouTube datacenter IP blocking on Streamlit Cloud.
+    Advanced Bot-Check Bypass:
+    Uses 'android_vr' and 'tv_embedded' player clients which don't trigger the bot verification challenge.
     """
     opts = {
         'quiet': True,
@@ -94,16 +93,29 @@ def get_ytdl_base_options(extra_opts=None):
         'ffmpeg_location': FFMPEG_BIN,
         'extractor_args': {
             'youtube': {
-                'player_client': ['ios', 'android', 'web_creator', 'mweb'],
+                'player_client': ['android_vr', 'tv_embedded', 'ios', 'web_creator'],
                 'player_skip': ['webpage', 'configs']
             }
         },
         'http_headers': {
-            'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1',
-            'Accept-Language': 'en-US,en;q=0.9',
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+            'Accept-Language': 'en-US,en;q=0.9'
         }
     }
+
+    # If cookie text provided in sidebar or Streamlit Secrets
+    cookie_content = None
+    if "cookie_text" in globals() and cookie_text and cookie_text.strip():
+        cookie_content = cookie_text
+    elif hasattr(st, "secrets") and "YOUTUBE_COOKIES" in st.secrets:
+        cookie_content = st.secrets["YOUTUBE_COOKIES"]
+
+    if cookie_content:
+        cookie_file_path = "youtube_cookies.txt"
+        with open(cookie_file_path, "w", encoding="utf-8") as cf:
+            cf.write(cookie_content.strip())
+        opts['cookiefile'] = cookie_file_path
+
     if extra_opts:
         opts.update(extra_opts)
     return opts
@@ -124,6 +136,7 @@ def extract_video_id(url):
 
 def fetch_transcript_robust(url, video_id):
     """Safely extracts transcript lines with cloud bypass."""
+    # Method 1: yt-dlp with android_vr client
     try:
         ydl_opts = get_ytdl_base_options({
             'skip_download': True,
@@ -166,6 +179,7 @@ def fetch_transcript_robust(url, video_id):
     except Exception:
         pass
 
+    # Method 2: youtube-transcript-api fallback
     try:
         import youtube_transcript_api
         api = getattr(youtube_transcript_api, "YouTubeTranscriptApi", None)
@@ -197,14 +211,32 @@ def extract_json_safely(raw_text):
     return None
 
 def download_source_fast(url, output_path="source.mp4"):
-    """Downloads stream with cloud 403-bypass and fallback formats."""
+    """Downloads stream with multi-client bot bypass."""
+    # Attempt 1: android_vr + tv_embedded
     ydl_opts = get_ytdl_base_options({
         'format': 'bestvideo[height<=2160][ext=mp4]+bestaudio[ext=m4a]/bestvideo[height<=1080]+bestaudio/best[height<=1080]/best[ext=mp4]/best',
         'outtmpl': output_path,
         'overwrites': True
     })
-    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        ydl.download([url])
+
+    try:
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            ydl.download([url])
+    except Exception:
+        # Attempt 2: Direct Fallback to standard iOS / generic format
+        fallback_opts = get_ytdl_base_options({
+            'format': 'best[ext=mp4]/best',
+            'outtmpl': output_path,
+            'overwrites': True,
+            'extractor_args': {
+                'youtube': {
+                    'player_client': ['ios', 'android']
+                }
+            }
+        })
+        with yt_dlp.YoutubeDL(fallback_opts) as ydl:
+            ydl.download([url])
+
     return output_path
 
 # ----------------- OLLAMA ENGINES -----------------
@@ -490,7 +522,7 @@ if st.button(action_label, type="primary", use_container_width=True):
                 status.write(f"✅ Loaded dialogue ({len(transcript_items)} lines).")
 
                 # 2. Download Stream
-                status.write("📥 Step 2/4: Downloading video stream (Cloud 403-Bypass active)...")
+                status.write("📥 Step 2/4: Downloading video stream (Cloud Bot-Bypass active)...")
                 source_file = f"source_{video_id}.mp4"
                 download_source_fast(url_input, source_file)
                 status.write("✅ Source video ready.")
