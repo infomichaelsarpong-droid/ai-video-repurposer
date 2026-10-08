@@ -32,8 +32,8 @@ st.set_page_config(
     layout="wide"
 )
 
-st.title("⚡ AI 4K Video Repurposing Studio (Ultra Fast)")
-st.caption("Turn any 1–3 hour YouTube video into **5x 4K Viral Shorts (9:16)** OR a **10-Minute 4K Long-Form Mastercut (16:9)** using **Ollama** or Fast AI.")
+st.title("⚡ AI 4K Video Repurposing Studio")
+st.caption("Turn any 1–3 hour YouTube video into **5x 4K Viral Shorts (9:16)** OR a **10-Minute 4K Long-Form Mastercut (16:9)**.")
 
 # ----------------- SIDEBAR CONFIG -----------------
 with st.sidebar:
@@ -44,15 +44,15 @@ with st.sidebar:
     )
 
     st.markdown("---")
-    st.header("🤖 AI Engine (Ollama / Local)")
+    st.header("🤖 AI Engine")
     ai_engine = st.selectbox(
         "AI Engine",
-        ["Ollama (Local Llama 3 / Mistral - Free)", "Smart Algorithmic Engine (Instant)"]
+        ["Smart Algorithmic Engine (Instant - Cloud & Local)", "Ollama (Local Llama 3 - PC Only)"]
     )
 
     ollama_model = "llama3.2"
     if "Ollama" in ai_engine:
-        ollama_model = st.text_input("Ollama Model", value="llama3.2", help="Make sure you ran 'ollama run llama3.2'")
+        ollama_model = st.text_input("Ollama Model", value="llama3.2")
 
     st.markdown("---")
     st.header("🎬 Fast 4K Render Settings")
@@ -63,13 +63,13 @@ with st.sidebar:
         render_resolution = st.selectbox("Resolution", ["4K Ultra HD Widescreen (3840x2160)", "Full HD Widescreen (1920x1080)"])
         target_duration_min = st.slider("Target Video Duration (Minutes)", 5, 20, 10)
 
-    render_speed = st.selectbox("Encoding Speed", ["Ultra Fast (Recommended - Seconds)", "Standard Quality"], index=0)
+    render_speed = st.selectbox("Encoding Speed", ["Ultra Fast (Recommended)", "Standard Quality"], index=0)
 
     st.markdown("---")
     if FFMPEG_BIN != "ffmpeg" or shutil.which("ffmpeg"):
         st.success("✅ FFmpeg Engine: Active")
     else:
-        st.warning("⚠️ Run: `pip install imageio-ffmpeg`")
+        st.warning("⚠️ FFmpeg: Checking...")
 
 # ----------------- RESOLUTION MAPPING -----------------
 res_map = {
@@ -78,6 +78,35 @@ res_map = {
     "4K Ultra HD Widescreen (3840x2160)": "3840:2160",
     "Full HD Widescreen (1920x1080)": "1920:1080"
 }
+
+# ----------------- CLOUD-BYPASS YOUTUBE HEADERS -----------------
+def get_ytdl_base_options(extra_opts=None):
+    """
+    Cloud Bot-Detection & 403 Forbidden Bypass:
+    Uses iOS / Android client impersonation to bypass YouTube datacenter IP blocking on Streamlit Cloud.
+    """
+    opts = {
+        'quiet': True,
+        'no_warnings': True,
+        'nocheckcertificate': True,
+        'geo_bypass': True,
+        'cachedir': False,
+        'ffmpeg_location': FFMPEG_BIN,
+        'extractor_args': {
+            'youtube': {
+                'player_client': ['ios', 'android', 'web_creator', 'mweb'],
+                'player_skip': ['webpage', 'configs']
+            }
+        },
+        'http_headers': {
+            'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1',
+            'Accept-Language': 'en-US,en;q=0.9',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+        }
+    }
+    if extra_opts:
+        opts.update(extra_opts)
+    return opts
 
 # ----------------- CORE UTILS -----------------
 def extract_video_id(url):
@@ -94,17 +123,14 @@ def extract_video_id(url):
     return None
 
 def fetch_transcript_robust(url, video_id):
-    """Safely extracts transcript lines with timestamps."""
+    """Safely extracts transcript lines with cloud bypass."""
     try:
-        ydl_opts = {
+        ydl_opts = get_ytdl_base_options({
             'skip_download': True,
             'writesubtitles': True,
             'writeautomaticsub': True,
-            'subtitleslangs': ['en', 'en-US', 'en-orig', 'en-GB'],
-            'quiet': True,
-            'no_warnings': True,
-            'ffmpeg_location': FFMPEG_BIN
-        }
+            'subtitleslangs': ['en', 'en-US', 'en-orig', 'en-GB']
+        })
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=False)
             subtitles = info.get('subtitles', {}) or info.get('automatic_captions', {})
@@ -114,18 +140,22 @@ def fetch_transcript_robust(url, video_id):
                     formats = subtitles[lang]
                     json_fmt = next((f for f in formats if isinstance(f, dict) and f.get('ext') == 'json3'), None)
                     if json_fmt and 'url' in json_fmt:
-                        req = urllib.request.urlopen(json_fmt['url'], timeout=15)
-                        data = json.loads(req.read().decode('utf-8'))
-                        items = []
-                        for event in data.get('events', []):
-                            if isinstance(event, dict) and 'segs' in event:
-                                seg_text = "".join([s.get('utf8', '') for s in event['segs'] if isinstance(s, dict)]).strip()
-                                if seg_text and seg_text != '\n':
-                                    t_start = float(event.get('tStartMs', 0)) / 1000.0
-                                    d_ms = float(event.get('dDurationMs', 2000)) / 1000.0
-                                    items.append({'start': t_start, 'duration': d_ms, 'text': seg_text})
-                        if items:
-                            return items
+                        req = urllib.request.Request(
+                            json_fmt['url'],
+                            headers={'User-Agent': 'Mozilla/5.0'}
+                        )
+                        with urllib.request.urlopen(req, timeout=15) as res:
+                            data = json.loads(res.read().decode('utf-8'))
+                            items = []
+                            for event in data.get('events', []):
+                                if isinstance(event, dict) and 'segs' in event:
+                                    seg_text = "".join([s.get('utf8', '') for s in event['segs'] if isinstance(s, dict)]).strip()
+                                    if seg_text and seg_text != '\n':
+                                        t_start = float(event.get('tStartMs', 0)) / 1000.0
+                                        d_ms = float(event.get('dDurationMs', 2000)) / 1000.0
+                                        items.append({'start': t_start, 'duration': d_ms, 'text': seg_text})
+                            if items:
+                                return items
 
             dur = float(info.get('duration', 600))
             items = []
@@ -167,15 +197,12 @@ def extract_json_safely(raw_text):
     return None
 
 def download_source_fast(url, output_path="source.mp4"):
-    """Downloads optimized stream with high speed."""
-    ydl_opts = {
-        'format': 'bestvideo[height<=2160][ext=mp4]+bestaudio[ext=m4a]/bestvideo[height<=1080]+bestaudio/best[height<=1080]/best',
+    """Downloads stream with cloud 403-bypass and fallback formats."""
+    ydl_opts = get_ytdl_base_options({
+        'format': 'bestvideo[height<=2160][ext=mp4]+bestaudio[ext=m4a]/bestvideo[height<=1080]+bestaudio/best[height<=1080]/best[ext=mp4]/best',
         'outtmpl': output_path,
-        'quiet': True,
-        'no_warnings': True,
-        'overwrites': True,
-        'ffmpeg_location': FFMPEG_BIN
-    }
+        'overwrites': True
+    })
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         ydl.download([url])
     return output_path
@@ -192,7 +219,7 @@ def query_ollama_longform(transcript_items, target_mins=10, model="llama3.2"):
     You are an expert YouTube editor. Summarize this 1-3 hour video into an engaging {target_mins}-minute mastercut video.
     Pick 8 sequential, key chapter moments (each ~60-80 seconds).
 
-    Return strict JSON with this exact structure:
+    Return strict JSON:
     {{
       "title": "Catchy YouTube Long-Form Title under 60 chars with 1 emoji",
       "summary": "2 sentence executive summary of the mastercut",
@@ -208,7 +235,6 @@ def query_ollama_longform(transcript_items, target_mins=10, model="llama3.2"):
         {{"chapter_title": "Final Verdict & Action Plan", "start": 1300.0, "end": 1375.0}}
       ]
     }}
-
     Transcript outline:
     {condensed[:3000]}
     """
@@ -274,7 +300,7 @@ def query_ollama_shorts(transcript_items, model="llama3.2"):
         parsed = extract_json_safely(res.get("response", "{}"))
         return parsed
 
-# ----------------- ALGORITHMIC FALLBACKS -----------------
+# ----------------- ALGORITHMIC ENGINES -----------------
 def generate_long_form_chapters_algo(transcript_items, target_mins=10):
     total_items = len(transcript_items)
     num_chapters = 8
@@ -464,7 +490,7 @@ if st.button(action_label, type="primary", use_container_width=True):
                 status.write(f"✅ Loaded dialogue ({len(transcript_items)} lines).")
 
                 # 2. Download Stream
-                status.write("📥 Step 2/4: Downloading video stream...")
+                status.write("📥 Step 2/4: Downloading video stream (Cloud 403-Bypass active)...")
                 source_file = f"source_{video_id}.mp4"
                 download_source_fast(url_input, source_file)
                 status.write("✅ Source video ready.")
